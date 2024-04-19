@@ -1,0 +1,31 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net8.0-windows</TargetFramework>
+		<Nullable>enable</Nullable>
+		<UseWPF>true</UseWPF>
+		<PlatformTarget>x64</PlatformTarget>
+		<Platforms>x64</Platforms>
+		<Authors>GelSight</Authors>
+		<UseWindowsForms>False</UseWindowsForms>
+		<AssemblyVersion>3.7.0.0</AssemblyVersion>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+		<GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+		<NoWarn>CA1416</NoWarn>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+		<GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+		<NoWarn>CA1416</NoWarn>
+	</PropertyGroup>
+
+
+<ItemGroup>
+  <Reference Include="GelSight.Api.Client">
+    <HintPath>GelSight.Api.Client.dll</HintPath>
+  </Reference>
+</ItemGroup>
+</Project>
