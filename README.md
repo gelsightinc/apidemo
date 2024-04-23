@@ -140,8 +140,8 @@ The Results parameter in the AnalysisSaved event contains JSON formatted data fr
 
 The JSON string contains two arrays. 
 
-- [Shapes](https://github.com/gelsightinc/apidemo/edit/main/README.md#shapes)
-- [Routines](https://github.com/gelsightinc/apidemo/edit/main/README.md#routines)
+- [Shapes](https://github.com/gelsightinc/apidemo/tree/main?tab=readme-ov-file#shapes)
+- [Routines](https://github.com/gelsightinc/apidemo/tree/main?tab=readme-ov-file#routines)
 
 The “shapes” contain an entry for each user-created shape drawn on the scan. 
 
