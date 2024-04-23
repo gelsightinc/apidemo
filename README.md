@@ -201,7 +201,7 @@ Each shape has the following shared properties.
 | y      | 313.32345679  | Y position of center [pixel]                            |
 | r      | 562.765432099 | radius [pixel]                                          |
 
-****Polygon/Polyline
+#### Polygon/Polyline
 
 | Header   | Example                                                                                          | Comment                                                     |
 | -------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
