@@ -89,7 +89,7 @@ The Client DLL’s ConnectionManager will raise the following events when state 
 | ScanDeleted            | - ScanFolder [string]<br>- Success [bool]                                                                                                                                                                                                                       | This event is raised after the TryDeleteScan request is made or if the user deletes a scan in GSM. The Success parameter represents if the deletion operation succeeded or failed.<br><br>NOTE: If a scan is deleted outside of GSM, such as in Windows Explorer for example, the API will not raise this event.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | ErrorMessageReceived   | - ErrorMessage [string]<br>- RequestId [int]                                                                                                                                                                                                                    | This event is raised if an error occurs in GSM while,<br><br>- Capturing a scan.<br>- Creating a heightmap.<br>- Running an analysis method.<br>- A hardware error has occurred.<br><br>The RequestId is the id of the client action that was being processed. It may be 0 if the operation was not initiated by the Client program.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 
-## ScanCompleted Event
+### ScanCompleted Event
 
 The ScanMetaData parameter in the ScanCompleted event contains JSON formatted data from the scan.yaml file located in the newly captured scan’s folder on disk. It is recommended to use the free C# [Newtonsoft Json.NET library](https://www.newtonsoft.com/json) to help parse this information, but the API developer is free to use any method that they choose.
 
@@ -134,20 +134,20 @@ The JSON string does contain some replication of data.
 | metadata.detrended    | false                                                                                              | Is form removal (detrending) enabled? [bool]                                                                                                                                                                                                                                                          |
 | metadata.detrendorder | 2                                                                                                  | The order of detrending (only valid if ‘detrended’ is ‘true’)                                                                                                                                                                                                                                         |
 
-## AnalysisSaved Event
+### AnalysisSaved Event
 
 The Results parameter in the AnalysisSaved event contains JSON formatted data from the scancontext.yaml file located in the subfolder “analysis” inside the captured scan’s folder on disk. It is recommended to use the free C# [Newtonsoft Json.NET library](https://www.newtonsoft.com/json) to help parse this information, but the API developer is free to use any method that they choose.
 
 The JSON string contains two arrays. 
 
-- shapes
-- routines
+- [Shapes](https://github.com/gelsightinc/apidemo/edit/main/README.md#shapes)
+- [Routines](https://github.com/gelsightinc/apidemo/edit/main/README.md#routines)
 
 The “shapes” contain an entry for each user-created shape drawn on the scan. 
 
 The “routines” contain an entry for each analysis method that the user has saved for this scan.
 
-<ins>Shape</ins>
+### Shapes
 
 Shapes are defined in a coordinate system that has (0,0) located in the TopLeft corner of a scan.
 
@@ -157,7 +157,7 @@ Each shape has the following shared properties.
 | ------ | --------- | --------------------------------------------------- |
 | id     | 102750541 | Unique id referring to this instance of shape [int] |
 
-Rectangle:
+#### Rectangle
 
 | Header   | Example       | Comment                                                 |
 | -------- | ------------- | ------------------------------------------------------- |
@@ -169,7 +169,7 @@ Rectangle:
 | h        | 1219.83209877 | Height of rectangle [pixel]                             |
 | rotation | 0             | Rotation [degree]                                       |
 
-Ruler:
+#### Ruler
 
 | Header | Example       | Comment                                                 |
 | ------ | ------------- | ------------------------------------------------------- |
@@ -180,7 +180,7 @@ Ruler:
 | x2     | 562.765432099 | X position of second point ofruler [pixel]              |
 | y2     | 1219.83209877 | Y position of second point ofruler [pixel]              |
 
-Line:
+#### Line
 
 | Header | Example       | Comment                                                 |
 | ------ | ------------- | ------------------------------------------------------- |
@@ -191,7 +191,7 @@ Line:
 | x2     | 562.765432099 | X position of second point of line [pixel]              |
 | y2     | 1219.83209877 | Y position of second point of line [pixel]              |
 
-Circle:
+#### Circle
 
 | Header | Example       | Comment                                                 |
 | ------ | ------------- | ------------------------------------------------------- |
@@ -201,7 +201,7 @@ Circle:
 | y      | 313.32345679  | Y position of center [pixel]                            |
 | r      | 562.765432099 | radius [pixel]                                          |
 
-Polygon/Polyline:
+****Polygon/Polyline
 
 | Header   | Example                                                                                          | Comment                                                     |
 | -------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
@@ -210,7 +210,7 @@ Polygon/Polyline:
 | points[] | [(66.2933631391, 1300.69689919), (2348.81804603, 1367.46178936), (62.1205575031, 2001.72824603)] | Array of X/Y position of each point in the PolyLine [pixel] |
 | closed   | true                                                                                             | true: polygon<br>false: polyline                            |
 
-<ins>Routines</ins>
+### Routines
 
 Some routines will allow the user to draw one or more shapes and use them as input to the routine. If so, those inputs are referred to as shapeid which is referencing the array of “shapes”. One example is offset which requires a user drawn line as the shape input.
 
@@ -219,7 +219,7 @@ Some of the routines create a PNG output file that is rendered on top of the sca
 ![](https://paper-attachments.dropboxusercontent.com/s_B4B3D519A5D392C96BE7D6DD5E404B2E6D9DBEA380B85A419F81A9642EC1703E_1713568279714_image.png)
 
 
-ABS 1781:
+#### ABS 1781
 
 | Header              | Example                                          | Comment                                                                                 |
 | ------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------- |
@@ -243,7 +243,7 @@ ABS 1781:
 | meta_sdkversion     | 3.7.102.0                                        | GSM version used to run this routine                                                    |
 
 
-ABS 2322:
+#### ABS 2322
 
 | Header              | Example          | Comment                                                                                       |
 | ------------------- | ---------------- | --------------------------------------------------------------------------------------------- |
@@ -273,7 +273,7 @@ ABS 2322:
 | meta_sdkversion     | 3.7.102.0        | GSM version used to run this routine                                                          |
 
 
-Defect Detection:
+#### Defect Detection
 
 | Header              | Example                                                            | Comment                                                                                                                                                                                                                                                     |
 | ------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -304,7 +304,7 @@ Defect Detection:
 | meta_sdkversion     | 3.7.102.0                                                          | GSM version used to run this routine                                                                                                                                                                                                                        |
 
 
-Fastener:
+#### Fastener
 
 | Header              | Example                                           | Comment                                                                                       |
 | ------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------- |
@@ -332,7 +332,7 @@ Fastener:
 | meta_sdkversion     | 3.7.102.0                                         | GSM version used to run this routine                                                          |
 
 
-Fillet Relief:
+#### Fillet Relief
 
 | Header              | Example                                                      | Comment                                                                           |
 | ------------------- | ------------------------------------------------------------ | --------------------------------------------------------------------------------- |
@@ -358,7 +358,7 @@ Fillet Relief:
 | meta_sdkversion     | 3.7.102.0                                                    | GSM version used to run this routine                                              |
 
 
-Hole Diameter:
+#### Hole Diameter
 
 | Header              | Example                                       | Comment                                                                       |
 | ------------------- | --------------------------------------------- | ----------------------------------------------------------------------------- |
@@ -378,7 +378,7 @@ Hole Diameter:
 | meta_sdkversion     | 3.7.102.0                                     | GSM version used to run this routine                                          |
 
 
-LGP EN6100:
+#### LGP EN6100
 
 | Header              | Example                                           | Comment                                                                                       |
 | ------------------- | ------------------------------------------------- | --------------------------------------------------------------------------------------------- |
@@ -404,7 +404,7 @@ LGP EN6100:
 | meta_sdkversion     | 3.7.102.0                                         | GSM version used to run this routine                                                          |
 
 
-LGP EN6114:
+#### LGP EN6114
 
 | Header              | Example                                          | Comment                                                                                        |
 | ------------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
@@ -430,7 +430,7 @@ LGP EN6114:
 | meta_sdkversion     | 3.7.102.0                                        | GSM version used to run this routine                                                           |
 
 
-Offset:
+#### Offset
 
 | Header              | Example                                                                      | Comment                                                                                                                                                                                                                                                          |
 | ------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -461,7 +461,7 @@ Offset:
 | meta_sdkversion     | 3.7.102.0                                                                    | GSM version used to run this routine                                                                                                                                                                                                                             |
 
 
-Particle Detection:
+#### Particle Detection
 
 | Header               | Example            | Comment                                                                                                                                                                                                      |
 | -------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -494,7 +494,7 @@ Particle Detection:
 | meta_sdkversion      | 3.7.102.0          | GSM version used to run this routine                                                                                                                                                                         |
 
 
-Pit Detection:
+#### Pit Detection
 
 | Header              | Example       | Comment                                                                                                                                                                                           |
 | ------------------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -522,7 +522,7 @@ Pit Detection:
 | meta_sdkversion     | 3.7.102.0     | GSM version used to run this routine                                                                                                                                                              |
 
 
-Profile Geometry:
+#### Profile Geometry
 
 | Header              | Example                                                                           | Comment                                                                                                                                                                                                                                                          |
 | ------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -558,7 +558,7 @@ Profile Geometry:
 | meta_sdkversion     | 3.7.102.0                                                                         | GSM version used to run this routine                                                                                                                                                                                                                             |
 
 
-Profile Roughness:
+#### Profile Roughness
 
 | Header              | Example                                                                        | Comment                                                                                                                                                                                                                                                          |
 | ------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -595,7 +595,7 @@ Profile Roughness:
 | meta_sdkversion     | 3.7.102.0                                                                      | GSM version used to run this routine                                                                                                                                                                                                                             |
 
 
-Radius:
+#### Radius
 
 | Header              | Example                                                           | Comment                                                                                                                                                                                                                                   |
 | ------------------- | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -625,7 +625,7 @@ Radius:
 | meta_sdkversion     | 3.7.102.0                                                         | GSM version used to run this routine                                                                                                                                                                                                      |
 
 
-Scratch:
+#### Scratch
 
 | Header              | Example                  | Comment                                                                                                                          |
 | ------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
@@ -646,7 +646,7 @@ Scratch:
 | meta_sdkversion     | 3.7.102.0                | GSM version used to run this routine                                                                                             |
 
 
-Shotpeen:
+#### Shotpeen
 
 | Header              | Example   | Comment                                                                 |
 | ------------------- | --------- | ----------------------------------------------------------------------- |
@@ -664,7 +664,7 @@ Shotpeen:
 | meta_sdkversion     | 3.7.102.0 | GSM version used to run this routine                                    |
 
 
-Surface Roughness:
+#### Surface Roughness
 
 | Header              | Example           | Comment                                                                                                                                    |
 | ------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -691,7 +691,7 @@ Surface Roughness:
 | meta_sdkversion     | 3.7.102.0         | GSM version used to run this routine                                                                                                       |
 
 
-Weld Bead:
+#### Weld Bead
 
 | Header              | Example                                                         | Comment                                                                               |
 | ------------------- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
