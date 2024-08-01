@@ -1,7 +1,9 @@
 ﻿using System;
 using System.ComponentModel;
+using System.IO;
 using System.Windows;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using GelSight.Api.Client;
 using GelSight.Api.Client.EventArgs;
 //using Newtonsoft.Json.Linq;
@@ -69,8 +71,11 @@ namespace GelSight.Api.HelloWorld
             cm.ScanCompleted          += ScanCompleted;
             cm.AnalysisSaved          += AnalysisSaved;
             cm.HeightmapStarted       += HeightmapStarted;
+            cm.HeightmapCanceled      += HeightmapCanceled;
             cm.HeightmapCompleted     += HeightmapCompleted;
             cm.ScanDeleted            += ScanDeleted;
+            cm.GelStateChanged        += GelStateChanged;
+            cm.ImageAcquired          += ImageAcquired;
         }
 
         private void UnsubscribeFromServerEvents(ConnectionManager? cm)
@@ -85,8 +90,11 @@ namespace GelSight.Api.HelloWorld
             cm.ScanCompleted          -= ScanCompleted;
             cm.AnalysisSaved          -= AnalysisSaved;
             cm.HeightmapStarted       -= HeightmapStarted;
+            cm.HeightmapCanceled      -= HeightmapCanceled;
             cm.HeightmapCompleted     -= HeightmapCompleted;
             cm.ScanDeleted            -= ScanDeleted;
+            cm.GelStateChanged        -= GelStateChanged;
+            cm.ImageAcquired          -= ImageAcquired;
         }
 
         //
@@ -103,6 +111,11 @@ namespace GelSight.Api.HelloWorld
             AddLine($"Heightmap completed: ScanFolder = {args.ScanFolder}, Success = {args.Success}");
         }
 
+        private void HeightmapCanceled(object? sender, EventArgs args)
+        {
+            AddLine("Heightmap canceled.");
+        }
+        
         private void HeightmapStarted(object? sender, string scanFolder)
         {
             AddLine("Heightmap started.");
@@ -140,10 +153,49 @@ namespace GelSight.Api.HelloWorld
                 var serial = $"Gel Serial: {gelInfo.Serial ?? " Unknown"}";
                 var name = $"Gel Type: {gelInfo.Type ?? " Unknown"}";
                 var useBy = $"Gel Use by: {gelInfo.UseBy?.ToShortDateString() ?? " Unknown"}";
-                GelInfo.Content = string.Join('\t', serial, name, useBy);
+                GelInfo.Content = string.Join("\t", serial, name, useBy);
             });
 
             AddLine($"Gel info changed: Serial = {gelInfo.Serial}, Type = {gelInfo.Type}, UseBy = {gelInfo.UseBy}");
+        }
+
+        private void GelStateChanged(object? sender, string args)
+        {
+            AddLine($"Gel state changed: state = {args}");
+        }
+
+        private void ImageAcquired(object? sender, MessageImageAcquiredEventArgs args)
+        {
+            // Call the helper method to convert the array of bytes representing
+            // a jpeg image to a BitmapImage object to display in the UI
+            var image = BitmapImageFromJpegArray(args.JpegImage);
+            
+            Dispatcher.Invoke(() =>
+            {                
+                ScanImage.Source = image;
+            });
+        }
+
+        /// <summary>
+        /// Helper method to convert an array of bytes representing a jpeg image to a BitmapImage object.
+        /// </summary>
+        private static BitmapImage? BitmapImageFromJpegArray(byte[] data)
+        {
+            if (data.Length == 0)
+                return null;
+
+            using var ms = new MemoryStream(data);
+
+            var img = new BitmapImage();
+            img.BeginInit();
+            img.CacheOption = BitmapCacheOption.OnLoad;
+            img.StreamSource = ms;
+            img.EndInit();
+
+            if (img.CanFreeze)
+                img.Freeze();
+
+            return img;
         }
 
         private void ErrorMessageReceived(object? sender, ErrorMessageReceivedEventArgs args)
@@ -159,9 +211,11 @@ namespace GelSight.Api.HelloWorld
                 SensorLive.IsChecked = status.IsSensorLive;
                 ScanPossible.IsChecked = status.IsScanPossible;
             });
+
+            DeviceSerialNumber = status.Serial ?? string.Empty;
             
             AddLine($"Status changed: IsSensorPresent = {status.IsSensorPresent}, IsSensorLive = {status.IsSensorLive}, IsScanPossible = {status.IsScanPossible}, " +
-                    $"Model = {status.Model}, Serial = {status.Serial}, Configuration = {status.Configuration}, " +
+                    $"Model = {status.Model}, DisplaySerial = {status.DisplaySerial}, Serial = {status.Serial}, Configuration = {status.Configuration}, " +
                     $"FirmwareVersion = {status.FirmwareVersion}, ImageWidth = {status.ImageWidth}, ImageHeight = {status.ImageHeight}");
         }
 
@@ -172,7 +226,9 @@ namespace GelSight.Api.HelloWorld
             Dispatcher.Invoke(() =>
             {
                 Status.Content           = connectionState.GetDescription();
-                Status.Background        = new SolidColorBrush(connectionState.GetColor());
+                var color = connectionState.GetColor();
+                var converted = Color.FromArgb(color.A, color.R, color.G, color.B);
+                Status.Background        = new SolidColorBrush(converted);
                 ConnectBtn.IsEnabled     = CanConnect;
                 IpAddress.IsEnabled      = CanConnect;
                 Port.IsEnabled           = CanConnect;
@@ -189,14 +245,18 @@ namespace GelSight.Api.HelloWorld
         //
         // UI helper functions
         //
-        
-        private bool CanDisconnect => _connectionManager.ConnectionState is ConnectionState.ConnectedAndValidated or ConnectionState.Connected or ConnectionState.Connecting;
-        private bool CanConnect    => _connectionManager.ConnectionState is ConnectionState.NotStarted or ConnectionState.ValidationFailed;
-        
+
+        private bool CanDisconnect => _connectionManager.ConnectionState == ConnectionState.ConnectedAndValidated ||
+                                      _connectionManager.ConnectionState == ConnectionState.Connected ||
+                                      _connectionManager.ConnectionState == ConnectionState.Connecting;
+        private bool CanConnect    => _connectionManager.ConnectionState == ConnectionState.NotStarted ||
+                                      _connectionManager.ConnectionState == ConnectionState.ValidationFailed ||
+                                      _connectionManager.ConnectionState == ConnectionState.VersionMismatch;
+
         //
         // Button click event handlers to demonstrate server request actions.
         //
-        
+
         private void RequestHeightmap_OnClick(object sender, RoutedEventArgs e)
         {
             try
@@ -253,6 +313,62 @@ namespace GelSight.Api.HelloWorld
             }
         }
 
+        private void SubscribeGelState_OnClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                SubscribeToGelState = true;
+                var requestId = _connectionManager.UpdateSubscriptions(SubscribeToLiveImages, SubscribeToGelState, DeviceSerialNumber);
+                AddLine($"Message sent: RequestId = {requestId}");
+            }
+            catch (Exception ex)
+            {
+                AddLine(ex.Message);
+            }
+        }
+
+        private void UnsubscribeGelState_OnClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                SubscribeToGelState = false;
+                var requestId = _connectionManager.UpdateSubscriptions(SubscribeToLiveImages, SubscribeToGelState, DeviceSerialNumber);
+                AddLine($"Message sent: RequestId = {requestId}");
+            }
+            catch (Exception ex)
+            {
+                AddLine(ex.Message);
+            }
+        }
+
+        private void SubscribeLiveView_OnClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                SubscribeToLiveImages = true;
+                var        requestId  = _connectionManager.UpdateSubscriptions(SubscribeToLiveImages, SubscribeToGelState, DeviceSerialNumber);
+                AddLine($"Message sent: RequestId = {requestId}");
+            }
+            catch (Exception ex)
+            {
+                AddLine(ex.Message);
+            }
+        }
+
+        private void UnsubscribeLiveView_OnClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                SubscribeToLiveImages = false;
+                var        requestId  = _connectionManager.UpdateSubscriptions(SubscribeToLiveImages, SubscribeToGelState, DeviceSerialNumber);
+                AddLine($"Message sent: RequestId = {requestId}");
+            }
+            catch (Exception ex)
+            {
+                AddLine(ex.Message);
+            }
+        }
+        
         private void RequestScan_OnClick(object sender, RoutedEventArgs e)
         {
             try
@@ -342,5 +458,9 @@ namespace GelSight.Api.HelloWorld
         {
             MessageList.Items.Clear();
         }
+
+        private bool   SubscribeToLiveImages { get; set; }
+        private bool   SubscribeToGelState   { get; set; }
+        private string DeviceSerialNumber    { get; set; } = string.Empty;
     }
 }
